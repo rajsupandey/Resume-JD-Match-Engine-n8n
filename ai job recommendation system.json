@@ -1,0 +1,296 @@
+{
+  "name": "ai job recommendation system",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload-resume",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1072,
+        -256
+      ],
+      "id": "90dcd3be-81ce-4286-bbae-b5e02128c21f",
+      "name": "Webhook",
+      "webhookId": "57856c30-78f2-4dcf-9dda-8f6cb646b216"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        -464
+      ],
+      "id": "98a0d933-dd67-4e37-b226-9311eee3246d",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        -336
+      ],
+      "id": "e33c4ad8-6c70-43aa-b087-606792f72507",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -160
+      ],
+      "id": "55c8b3ed-8a51-4c16-ad35-a00e3207842a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1ONEbSmGLTAKJTvt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "jd",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -656,
+        -112
+      ],
+      "id": "a2b5d7dc-a0e1-4cb2-a86d-c351c07742fe",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -48,
+        -304
+      ],
+      "id": "6a615bc0-11f8-47a5-872a-f7f5572362f8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert AI Recruitment Assistant.\n\nCompare the following Resume and Job Description.\n\nResume:\n{{ $json.resume_text }}\n\n----------------------------------------\n\nJob Description:\n{{ $json.jd_text }}\n\nInstructions:\n\n1. Compare the resume with the job description.\n2. Calculate a match score between 0 and 100.\n3. List all matched skills.\n4. List missing skills.\n5. Identify candidate strengths.\n6. Identify candidate weaknesses.\n7. Give one recommendation using only one of these values:\n   - Highly Recommended\n   - Recommended\n   - Consider\n   - Not Recommended\n\nReturn ONLY valid JSON in this exact format:\n\n{\n  \"match_score\": 0,\n  \"matched_skills\": [],\n  \"missing_skills\": [],\n  \"strengths\": [],\n  \"weaknesses\": [],\n  \"recommendation\": \"\"\n}                                             Return the response using the connected Structured Output Parser.    ",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        160,
+        -400
+      ],
+      "id": "57915d3f-0192-441f-950d-e3fcc8db2067",
+      "name": "resume parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"match_score\": 0,\n  \"matched_skills\": [\n    \"Python\",\n    \"SQL\"\n  ],\n  \"missing_skills\": [\n    \"Docker\"\n  ],\n  \"strengths\": [\n    \"Strong Python knowledge\"\n  ],\n  \"weaknesses\": [\n    \"No Docker experience\"\n  ],\n  \"recommendation\": \"Recommended\",\n  \"improvement_plan\": [\n    \"Learn Docker\",\n    \"Build one Streamlit project\",\n    \"Practice Linux basics\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        -192
+      ],
+      "id": "693014b9-3e7d-4837-aaaf-9faf772baebe",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "17855855-77bb-4099-9713-6ceb31e3a37c",
+              "name": "resume_text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        -656
+      ],
+      "id": "5c763fa3-53f0-4d87-878e-01809545f70c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f9d13b2-d329-4205-9853-8413e3ba479e",
+              "name": "jd_text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -64
+      ],
+      "id": "73a584a1-067e-4667-82fb-45c1b71626fd",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "resume parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "resume parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "resume parser": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "resume parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ca9409b3-70c3-474b-a119-5fb46130285b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "405b9d1d2effd3886b6b7fcdebe74eb7719f0a04b1cd79447e35cd0a69f378af"
+  },
+  "nodeGroups": [],
+  "id": "40C3eMcGoPcZjH6N",
+  "tags": []
+}
